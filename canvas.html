@@ -14,15 +14,17 @@
         align-items: center;
         height: 100vh;
         background-color: white;
-        transition: background-color 2s ease;
     }
     .conteiner{
         text-align: center;
     }
+    #folha{
+        cursor: none;
+    }
 </style>
 
 <body>
-    <div class="container">
+    <div class="conteiner">
         <canvas id="folha" width="600" height="500"></canvas>
         <script>
             //cria a atualização de tela
@@ -40,13 +42,15 @@
                 folhaDesenho = document.getElementById("folha");
                 areaDesenho = folhaDesenho.getContext("2d");
 
+                // variáveis do canvas
                 larguraCampo = 600;
                 alturaCampo = 500;
                 larguraLinha = 5;
                 diametroBola = 10;
                 alturaRaquete = 100;
                 espessuraRaquete = 10;
-
+                
+                // variavéis calcular
                 efeitoRaquete = 0.3;
 
                 velocidadeIA = 2;
@@ -56,7 +60,18 @@
                 posicaoBolaX = posicaoBolaY = 10;
                 velocidadeBolaPosicaoX = velocidadeBolaPosicaoY = 3;
 
-                pontuacaojogador = pontuacaoIA = 0;
+                pontuacaoJogador = pontuacaoIA = 11;
+
+                fimDeJogo = false;
+
+                // variáveis de animação/ transicão
+                transicaoTelaPreta = 0;
+                opacidadeTexto = 0;
+                offSetTexto = 0;
+
+                opacidadeTelaBranca = 0;
+                tamanhoTrofeu = 0;
+                confetes = [];
 
                 // controla a raquete do jogador
                 folhaDesenho.addEventListener('mousemove', function (e) {
@@ -69,7 +84,10 @@
 
             function exec() {
                 desenhar();
-                calcular();
+
+                if (!fimDeJogo){
+                    calcular(); 
+                }
             }
 
             function desenhar() {
@@ -89,8 +107,107 @@
                 areaDesenho.fillRect(posicaoBolaX - diametroBola / 2, posicaoBolaY - diametroBola / 2, diametroBola, diametroBola);
 
                 // exibe a pontuação dos jogadores
-                areaDesenho.fillText("Pontuação jogador - " + pontuacaojogador, 100, 50);
-                areaDesenho.fillText("Pontuação IA - " + pontuacaoIA, larguraCampo - 200, 50);
+                areaDesenho.fillText("Pontuação jogador : " + pontuacaoJogador, 100, 50);
+                areaDesenho.fillText("Pontuação IA : " + pontuacaoIA, larguraCampo - 200, 50);
+
+
+                // verifica se o jogo foi encerrado
+                if(fimDeJogo){
+                    
+                    // animação para vitória
+                    if(pontuacaoJogador == 12){
+                        opacidadeTelaBranca += 0.01;
+
+                        if(opacidadeTelaBranca > 1){
+                            opacidadeTelaBranca = 1;
+                        }
+
+                        document.body.style.backgroundColor = `rgba(255, 255, 255, ${opacidadeTelaBranca})`
+
+                        areaDesenho.fillStyle = `rgba(255, 255, 255, ${opacidadeTelaBranca})`;
+
+                        areaDesenho.fillRect(0, 0, larguraCampo, alturaCampo);
+
+                        if(opacidadeTelaBranca >= 1){
+
+                            // confetes
+                            for (let confete of confetes){
+                                confete.y += confete.velocidade;
+                                areaDesenho.fillStyle = confete.cor;
+                                areaDesenho.fillRect(confete.x, confete.y, confete.tamanho, confete.tamanho);
+                            }
+
+                            // troféu crescendo
+                            tamanhoTrofeu += 1.5;
+
+                            if(tamanhoTrofeu > 120){
+                                tamanhoTrofeu = 120;
+                            }
+
+                            areaDesenho.font = tamanhoTrofeu + "px Arial";
+                            areaDesenho.textAlign = "center";
+
+                            areaDesenho.fillText("🏆",larguraCampo / 2, 170);
+                            
+                            // texto
+                            opacidadeTexto += 0.01;
+
+                            if(opacidadeTexto > 1){
+                                opacidadeTexto = 1;
+                            }
+
+                            // sombra
+
+                            areaDesenho.shadowColor = `rgba(0, 0, 0, ${opacidadeTexto})`;
+                            areaDesenho.shadowBlur = 12;
+                            areaDesenho.shadowOffSetX = 4;
+                            areaDesenho.shadowOffSetY = 4;
+
+                            areaDesenho.fillStyle = `rgba(255, 215, 0, ${opacidadeTexto})`;
+                            areaDesenho.font = "bold 42px Arial";
+                            areaDesenho.fillText("PARABÉNS!", larguraCampo / 2, 300);
+
+                            areaDesenho.font = "bold 28px Arial";
+                            areaDesenho.fillText("VOCÊ VENCEU!", larguraCampo / 2, 350);
+                            
+                            areaDesenho.shadowBlur = 0;
+                        }
+                    }
+                    // animação para derrota
+                    else{
+                        // cria o efeito de transição
+                        transicaoTelaPreta += 12;
+                        
+                        if(transicaoTelaPreta > larguraCampo){
+                            transicaoTelaPreta = larguraCampo;
+                        }
+    
+                        let porcentagem = transicaoTelaPreta / larguraCampo;
+                        document.body.style.backgroundColor = `rgba(0, 0, 0, ${porcentagem})`;
+                        
+                        areaDesenho.fillStyle = '#000000';
+                        areaDesenho.fillRect(0, 0, transicaoTelaPreta, alturaCampo);
+
+                        if(transicaoTelaPreta >= larguraCampo){
+                            opacidadeTexto += 0.005;
+    
+                            if(opacidadeTexto > 1){
+                                opacidadeTexto = 1;
+                            }
+                            
+                            if(offSetTexto > 0){
+                                offSetTexto -= 0.2;
+                            }
+    
+                            areaDesenho.fillStyle = `rgba(255, 255, 255, ${opacidadeTexto})`;
+                            areaDesenho.font = '40px Arial';
+                            areaDesenho.textAlign = 'center';
+                            areaDesenho.textBaseline = 'middle';
+
+                            areaDesenho.fillText("QUE PENA, VOCÊ PERDEU!", larguraCampo / 2, 220 + offSetTexto);
+                        }
+                    }
+                }
             }
 
             function calcular() {
@@ -125,8 +242,12 @@
                         // ponto para IA
                         pontuacaoIA++;
 
-                        // volta a bola pro centro
-                        continuar();
+                        verificaFim();
+                    
+                        // volta a bola pro centro se o jogo ainda não acabou
+                        if(!fimDeJogo){
+                            continuar();
+                        }
                     }
                 }
 
@@ -145,13 +266,17 @@
                     }
                     if (posicaoBolaX - diametroBola / 2 > larguraCampo) {
                         // ponto pro jogador
-                        pontuacaojogador++;
+                        pontuacaoJogador++;
 
-                        // volta a bola pro centro
-                        continuar();
+                        verificaFim();
+
+                        // volta a bola pro centro se o jogo ainda não acabou
+                        if(!fimDeJogo){
+                            continuar();
+                        }
 
                         //verifica a pontuação e aumenta a dificuldade de acordo
-                        if (pontuacaojogador % 3 == 0) {
+                        if (pontuacaoJogador % 3 == 0) {
                             aumentaDificuldade();
                         }
                     }
@@ -188,7 +313,7 @@
             }
 
             function aumentaDificuldade() {
-                if (pontuacaojogador >= 3 && pontuacaojogador < 6) {
+                if (pontuacaoJogador >= 3 && pontuacaoJogador < 6) {
                     document.getElementById('indicadorDificuldade').textContent = "Dificuldade: Médio";
                     velocidadeBolaBase = 7;
                     velocidadeIA = 6;
@@ -196,7 +321,7 @@
                     // muda o background 
                     document.body.style.backgroundColor = '#2B662C';
                 }
-                else if (pontuacaojogador >= 6 && pontuacaojogador < 9) {
+                else if (pontuacaoJogador >= 6 && pontuacaoJogador < 9) {
                     document.getElementById('indicadorDificuldade').textContent = 'Dificuldade: Difícil';
                     velocidadeBolaBase = 13;
                     velocidadeIA = 9;
@@ -212,6 +337,32 @@
                 }
             }
 
+            function verificaFim(){
+                // verifica se a pontuação máxima foi atingida
+                if(pontuacaoJogador == 12 || pontuacaoIA == 12){
+                    fimDeJogo = true;
+                    transicaoTelaPreta = 0;
+                    opacidadeTexto = 0;
+                    offSetTexto = 30;
+
+                    opacidadeTelaBranca = 0;
+                    tamanhoTrofeu = 0;
+
+                    confetes = [];
+
+                    if(pontuacaoJogador == 12){
+                        for (let i = 0; i < 150; i++){
+                            confetes.push({
+                                x: Math.random() * larguraCampo,
+                                y: Math.random() * -500,
+                                velocidade: Math.random() * 4 + 2,
+                                tamanho: Math.random() * 8 + 4,
+                                cor: `hsl(${Math.random() * 360}, 100%, 50%)`
+                            })
+                        }
+                    }
+                }
+            }
         </script>
         <h1 id="indicadorDificuldade">Dificuldade: Fácil</h1>
         <h3>A cada 3 pontos marcados pelo jogador a velocidade da bola e da IA aumenta!</h3>
